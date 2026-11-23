@@ -26,6 +26,7 @@ function esc(s){ return String(s ?? "").replace(/[&<>"']/g, m => ({'&':'&amp;','
 function fmt(n){
   if(n === undefined || n === null || isNaN(n)) return "-";
   const a = Math.abs(n);
+  if(a < 1e-8) return "0";
   if(a >= 1e9) return (n/1e9).toFixed(2)+"B";
   if(a >= 1e6) return (n/1e6).toFixed(2)+"M";
   if(a >= 1000) return n.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2});

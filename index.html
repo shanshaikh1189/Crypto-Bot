@@ -25,6 +25,8 @@
     <div class="searchResults" id="searchResults"></div>
   </div>
   <span style="flex:1"></span>
+  <button class="btn secondary" id="cloudBtn" onclick="openCloud()">☁️ Login / Sync</button>
+  <span id="cloudStatus" class="status"></span>
   <label class="toggle"><input type="checkbox" id="halalOnly" onchange="renderAll()"> Sirf Halal-list coins</label>
   <label class="small">Auto-refresh:
     <select id="autoRefresh" onchange="setupAutoRefresh()">
@@ -301,8 +303,15 @@
   <div class="modal wide" id="reportBox"></div>
 </div>
 
+<!-- Cloud login modal -->
+<div class="modal-bg" id="cloudBg" onclick="if(event.target===this)closeCloud()">
+  <div class="modal" id="cloudBox"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2/dist/umd/supabase.js"></script>
 <script src="dashboard.js"></script>
 <script src="calculator.js"></script>
+<script src="cloud.js"></script>
 <script>
 // ---------- Init ----------
 renderCalc();
@@ -311,6 +320,7 @@ document.getElementById("halalListInput").value = halalList.join(", ");
 renderPortfolio();
 refreshAll();
 setupAutoRefresh();
+initCloud();
 </script>
 </body>
 </html>
