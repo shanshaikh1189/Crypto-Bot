@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crypto Signal & Coin Hunter Dashboard</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<h1>🪙 Crypto Signal & Coin Hunter Dashboard</h1>
+<div class="sub">Spot-only • Beginner mode • Live data from CoinGecko (public API, no key needed)</div>
+
+<div class="disclaimer">
+  ⚠️ <b>Zaroori baat:</b> Yeh signals ek simple rule-based system se aate hain — financial advice nahi, profit ki koi guarantee nahi.
+  "Halal" tags sirf aapki apni list se aate hain (Practical Islamic Finance / Sharlife.my / Saraf Screen / HalalScreener.app se verify karke) — bot khud shariah ruling nahi deta.
+  Filhal yeh <b>Paper Trading</b> (virtual money) mode mein hai. Naye hain? Pehle <b>📘 Seekhein</b> tab parhein.
+</div>
+
+<div class="topbar">
+  <button class="btn" onclick="refreshAll()">🔄 Refresh Data</button>
+  <span id="status" class="status">Load ho raha hai…</span>
+  <div class="searchWrap">
+    <input type="text" id="searchBox" placeholder="🔎 Koi bhi coin dhoondein (AAVE, PUMP…)" oninput="onSearchInput()" onkeydown="if(event.key==='Enter')doSearch()">
+    <div class="searchResults" id="searchResults"></div>
+  </div>
+  <span style="flex:1"></span>
+  <label class="toggle"><input type="checkbox" id="halalOnly" onchange="renderAll()"> Sirf Halal-list coins</label>
+  <label class="small">Auto-refresh:
+    <select id="autoRefresh" onchange="setupAutoRefresh()">
+      <option value="0">Off</option>
+      <option value="60000" selected>Har 1 min</option>
+      <option value="180000">Har 3 min</option>
+      <option value="300000">Har 5 min</option>
+    </select>
+  </label>
+</div>
+
+<div class="viewNav">
+  <button class="vbtn active" data-view="dash" onclick="switchView('dash')">📊 Dashboard</button>
+  <button class="vbtn" data-view="calc" onclick="switchView('calc')">🧮 Average &amp; Profit Calculator</button>
+</div>
+
+<!-- ================= CALCULATOR VIEW ================= -->
+<div id="view-calc" class="calc" style="display:none">
+  <div class="calcGrid">
+    <div>
+      <div class="calcBox">
+        <div class="calcHead">
+          <div>
+            <label class="f">Coin ka naam</label>
+            <input type="text" id="cCoin" list="coinList" placeholder="Misal: SOL, PUMP, AAVE" oninput="calcSet('coin', this.value.toUpperCase())">
+            <datalist id="coinList"></datalist>
+          </div>
+          <div style="display:flex; gap:6px; flex-wrap:wrap">
+            <button class="btn secondary" onclick="fetchLivePrice()">📡 Live price</button>
+            <button class="btn" onclick="saveCalc()">💾 Save</button>
+            <button class="btn secondary" onclick="newCalc()">＋ Naya</button>
+          </div>
+        </div>
+        <div id="liveInfo" class="hint" style="margin:-6px 0 10px"></div>
+        <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:6px">
+          <div class="seg" id="modeSeg">
+            <button data-m="multi" onclick="calcSet('mode','multi', true)">📥 Alag alag buys → Average</button>
+            <button data-m="direct" onclick="calcSet('mode','direct', true)">✍️ Average price seedha daalein</button>
+          </div>
+          <label class="small" style="display:flex; align-items:center; gap:6px">Exchange fee
+            <input type="number" id="cFee" step="0.05" min="0" style="width:70px; padding:6px" oninput="calcSet('fee', this.value)"> %
+          </label>
+        </div>
+        <div class="hint">Fee har buy aur sell par lagti hai (Binance ~0.1%). Pata nahi to 0.1 rehne dein.</div>
+      </div>
+
+      <!-- Multi buys -->
+      <div class="calcBox" id="multiBox">
+        <h3>📥 Aapki Buys</h3>
+        <div class="hint" style="margin:0 0 12px">Har dafa jab khareeda, ek line. Alag exchange par khareeda ho to Exchange likh dein. Amount <b>$</b> mein ya <b>coins (Qty)</b> mein — jo aapke paas ho.</div>
+        <div class="rowHead"><span>#</span><span>Exchange</span><span>Buy Price ($)</span><span>Kitna khareeda</span><span>Hisab</span><span></span></div>
+        <div id="buyRows"></div>
+        <datalist id="exList"><option>Binance</option><option>Bybit</option><option>KuCoin</option><option>OKX</option><option>MEXC</option><option>Gate</option><option>Bitget</option><option>HTX</option><option>Coinbase</option></datalist>
+        <button class="btn secondary" style="margin-top:4px" onclick="addRow()">＋ Ek aur buy add karein</button>
+      </div>
+
+      <!-- Direct -->
+      <div class="calcBox" id="directBox" style="display:none">
+        <h3>✍️ Seedha Average Price</h3>
+        <div class="hint" style="margin:0 0 12px">Agar exchange aapko pehle se "Avg. Price" dikha raha hai to wahi yahan likh dein.</div>
+        <div class="twoIn">
+          <div><label class="f">Average buy price ($)</label><input type="number" step="any" id="dAvg" oninput="calcSet('dAvg', this.value)"></div>
+          <div>
+            <label class="f">Kitna khareeda</label>
+            <div class="amtWrap">
+              <input type="number" step="any" id="dVal" oninput="calcSet('dVal', this.value)">
+              <select id="dKind" onchange="calcSet('dKind', this.value)"><option value="qty">Coins</option><option value="usd">$</option></select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sell -->
+      <div class="calcBox">
+        <h3>📤 Sell karein to kitna profit?</h3>
+        <div class="twoIn" style="margin-top:10px">
+          <div>
+            <label class="f">Sell price ($)</label>
+            <div class="amtWrap">
+              <input type="number" step="any" id="sPrice" oninput="calcSet('sPrice', this.value)">
+              <button class="miniBtn" title="Live price use karein" onclick="useLiveForSell()">📡</button>
+            </div>
+          </div>
+          <div>
+            <label class="f">Kitna bechna hai</label>
+            <div class="seg small" id="pctSeg">
+              <button data-p="25" onclick="calcSet('sPct',25,true)">25%</button>
+              <button data-p="50" onclick="calcSet('sPct',50,true)">50%</button>
+              <button data-p="75" onclick="calcSet('sPct',75,true)">75%</button>
+              <button data-p="100" onclick="calcSet('sPct',100,true)">100%</button>
+            </div>
+          </div>
+        </div>
+        <div id="sellResult"></div>
+      </div>
+
+      <!-- What-if -->
+      <div class="calcBox">
+        <h3>🔁 Average neeche/upar laana (DCA what-if)</h3>
+        <div class="twoIn" style="margin-top:10px">
+          <div><label class="f">Agar is price par aur khareedun ($)</label><input type="number" step="any" id="wPrice" oninput="computeCalc()"></div>
+          <div><label class="f">Itne $ ka</label><input type="number" step="any" id="wAmt" oninput="computeCalc()"></div>
+        </div>
+        <div id="whatIf" class="hint" style="font-size:13px"></div>
+        <div class="twoIn" style="margin-top:12px">
+          <div><label class="f">Mujhe average itna chahiye ($)</label><input type="number" step="any" id="tAvg" oninput="computeCalc()"></div>
+          <div><label class="f">Aur is price par khareedunga ($)</label><input type="number" step="any" id="tPrice" oninput="computeCalc()"></div>
+        </div>
+        <div id="targetAvg" class="hint" style="font-size:13px"></div>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div>
+      <div class="calcSticky">
+        <div class="bigCard">
+          <div class="t" id="rCoinTitle">Average Buy Price</div>
+          <div class="big" id="rAvg">—</div>
+          <div class="n" id="rAvgNote">Buys daalein, average yahan dikhega.</div>
+          <div class="mini3">
+            <div><div class="t">Total lagaya</div><div class="v" id="rCost">—</div></div>
+            <div><div class="t">Total coins</div><div class="v" id="rQty">—</div></div>
+            <div><div class="t">Break-even</div><div class="v" id="rBE">—</div></div>
+          </div>
+        </div>
+
+        <div class="calcBox" id="liveBox" style="display:none">
+          <h3>📡 Abhi ki halat (live price par)</h3>
+          <div id="liveNow"></div>
+        </div>
+
+        <div class="calcBox" id="exBox" style="display:none">
+          <h3>🏦 Exchange-wise</h3>
+          <div class="scrollx"><table class="exTable"><thead><tr><th>Exchange</th><th>Coins</th><th>Avg</th><th>Lagaya</th></tr></thead><tbody id="exBody"></tbody></table></div>
+        </div>
+
+        <div class="calcBox">
+          <h3>🎯 Targets (poori holding bechne par)</h3>
+          <div class="scrollx"><table><thead><tr><th>Move</th><th>Price</th><th>Net P&amp;L</th></tr></thead><tbody id="tgtBody"></tbody></table></div>
+        </div>
+
+        <div class="calcBox">
+          <h3>💾 Saved Calculations</h3>
+          <div class="hint" style="margin:0 0 8px">Har coin ka hisab save karein — is browser mein mehfooz rehta hai.</div>
+          <div class="chips" id="savedChips"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= DASHBOARD VIEW ================= -->
+<div id="view-dash">
+<div class="kpis" id="portfolioKpis"></div>
+
+<div class="grid two">
+  <div class="panel">
+    <div class="tabbar">
+      <div class="tab active" data-tab="scanner" onclick="switchTab('scanner')">🧭 All Coins (Scanner)</div>
+      <div class="tab" data-tab="signals" onclick="switchTab('signals')">📈 Signals</div>
+      <div class="tab" data-tab="hunter" onclick="switchTab('hunter')">🔍 Money Rotation</div>
+      <div class="tab" data-tab="gainers" onclick="switchTab('gainers')">🚀 Top Gainers</div>
+      <div class="tab" data-tab="trending" onclick="switchTab('trending')">🔥 Trending</div>
+      <div class="tab" data-tab="halal" onclick="switchTab('halal')">☪️ Halal List</div>
+      <div class="tab" data-tab="guide" onclick="switchTab('guide')">📘 Seekhein</div>
+    </div>
+
+    <div id="tab-scanner">
+      <div class="desc">Ek hi table mein sab kuch — har coin ka Signal, Money Rotation (Vol/MCap) aur Gainer rank saath saath. Column heading par click karke sort karein.
+        Stablecoins (USDT, USDC…) aur wrapped coins hata diye gaye hain kyunke unme trading ka faida nahi. Kisi bhi coin par <b>📋 Report</b> dabayein — poori research + trade plan milega.</div>
+      <div class="scrollx"><table id="scannerTable">
+        <thead><tr>
+          <th>Coin</th>
+          <th class="sortable" onclick="sortScanner('price')">Price</th>
+          <th class="sortable" onclick="sortScanner('h1')">1h ↕</th>
+          <th class="sortable" onclick="sortScanner('h24')">24h ↕</th>
+          <th class="sortable" onclick="sortScanner('d7')">7d ↕</th>
+          <th class="sortable" onclick="sortScanner('score')">Signal ↕</th>
+          <th class="sortable" onclick="sortScanner('vm')">Vol/MCap ↕</th>
+          <th class="sortable" onclick="sortScanner('mcap')">Mkt Cap ↕</th>
+          <th>Halal?</th><th></th>
+        </tr></thead>
+        <tbody></tbody>
+      </table></div>
+    </div>
+
+    <div id="tab-signals" style="display:none">
+      <div class="desc">Top-volume coins (stablecoins ke baghair) par rule-based signal. Yeh quick TP/SL sirf fixed % hai — <b>asal plan ke liye 📋 Report kholein</b>, wahan support ke hisab se SL banta hai.</div>
+      <div style="display:flex; gap:14px; margin-bottom:10px; font-size:12px; color:var(--muted); align-items:center">
+        TP %: <input type="number" id="tpPct" value="6" step="0.5" style="width:60px" onchange="renderSignals()">
+        SL %: <input type="number" id="slPct" value="4" step="0.5" style="width:60px" onchange="renderSignals()">
+      </div>
+      <div class="scrollx"><table id="signalsTable">
+        <thead><tr><th>Coin</th><th>Price</th><th>1h</th><th>24h</th><th>7d</th><th>Signal</th><th>Entry</th><th>TP</th><th>SL</th><th>Halal?</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+    </div>
+
+    <div id="tab-hunter" style="display:none">
+      <div class="desc">Money rotation — Vol/MCap ratio jitna zyada, us coin mein uske size ke muqable utni zyada trading ho rahi hai. Yahan sirf top 20 dikhte hain; kisi bhi coin ka ratio dekhne ke liye Scanner tab use karein.</div>
+      <div class="scrollx"><table id="hunterTable">
+        <thead><tr><th>Coin</th><th>Price</th><th>24h %</th><th>Volume</th><th>Mkt Cap</th><th>Vol/MCap</th><th>Read</th><th>Halal?</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+    </div>
+
+    <div id="tab-gainers" style="display:none">
+      <div class="desc">24h ke sabse bade gainers (WhatsApp-group style). Yaad rakhein: jo coin pehle hi bohot bhaag chuka ho, us mein late entry risky hoti hai — Report mein RSI zaroor dekhein.</div>
+      <div class="scrollx"><table id="gainersTable">
+        <thead><tr><th>#</th><th>Coin</th><th>Price</th><th>24h %</th><th>1h %</th><th>Volume</th><th>Risk</th><th>Halal?</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+    </div>
+
+    <div id="tab-trending" style="display:none">
+      <div class="desc">CoinGecko par sabse zyada search ho rahe coins — retail (aam logon) ka interest.</div>
+      <div class="scrollx"><table id="trendingTable">
+        <thead><tr><th>#</th><th>Coin</th><th>Mkt Cap Rank</th><th>24h %</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+    </div>
+
+    <div id="tab-halal" style="display:none">
+      <div class="desc">Apni verified-halal coin symbols likhein (comma se, jaise: <code>BTC, ETH, AAVE</code>). Yeh list aap khud
+        <a class="link" href="https://halalscreener.app/en/" target="_blank">HalalScreener.app</a>, Practical Islamic Finance,
+        <a class="link" href="https://sharlife.my/" target="_blank">Sharlife.my</a> ya Saraf Screen se verify karke banayein.</div>
+      <textarea id="halalListInput" placeholder="BTC, ETH, ..."></textarea>
+      <div style="margin:8px 0 12px"><button class="btn secondary" onclick="saveHalalList()">Save List</button></div>
+    </div>
+
+    <div id="tab-guide" style="display:none" class="guide"></div>
+  </div>
+
+  <div class="panel">
+    <h2>💼 Paper Trading Portfolio</h2>
+    <div class="desc">Virtual $10,000 se practice. Har trade ke saath SL/TP aur "kyun liya" note likhein — yahi aapka trading journal hai. SL ya TP hit hone par yahan alert dikhega.</div>
+    <div style="margin-bottom:10px"><button class="btn secondary" onclick="resetPortfolio()">↺ Reset Portfolio ($10,000)</button></div>
+    <h3 style="font-size:13px; margin:10px 0 6px">Open Positions</h3>
+    <div class="scrollx"><table id="positionsTable">
+      <thead><tr><th>Coin</th><th>Avg Entry</th><th>Current</th><th>SL / TP</th><th>P&amp;L</th><th>Status</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+    <h3 style="font-size:13px; margin:16px 0 6px">Trade Journal / History</h3>
+    <div class="scrollx" style="max-height:260px; overflow-y:auto"><table id="historyTable">
+      <thead><tr><th>Time</th><th>Coin</th><th>Side</th><th>Price</th><th>P&amp;L</th><th>Note</th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+  </div>
+</div>
+</div><!-- /view-dash -->
+
+<footer>Data: CoinGecko public API · Rule-based heuristics, not financial advice · Halal tags come from your own list.</footer>
+
+<!-- Buy modal -->
+<div class="modal-bg" id="buyModalBg">
+  <div class="modal">
+    <h3 id="buyModalTitle">Buy Coin</h3>
+    <div class="row"><span>Current Price</span><span id="buyModalPrice">-</span></div>
+    <div class="row"><span>Available Cash</span><span id="buyModalCash">-</span></div>
+    <div class="row"><span>Amount (USD)</span><input type="number" id="buyAmount" value="500"></div>
+    <div class="row"><span>Stop-Loss price</span><input type="number" id="buySL" step="any"></div>
+    <div class="row"><span>Take-Profit price</span><input type="number" id="buyTP" step="any"></div>
+    <div style="font-size:12px; color:var(--muted); margin-bottom:4px">Yeh trade kyun le rahe hain? (journal note)</div>
+    <textarea id="buyNote" placeholder="Misal: Scanner mein bullish, volume 2x, support ke paas, RSI 55"></textarea>
+    <div style="display:flex; gap:8px; margin-top:12px">
+      <button class="btn" style="flex:1" onclick="confirmBuy()">Confirm Buy</button>
+      <button class="btn secondary" style="flex:1" onclick="closeBuyModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Report modal -->
+<div class="modal-bg" id="reportBg" onclick="if(event.target===this)closeReport()">
+  <div class="modal wide" id="reportBox"></div>
+</div>
+
+<script src="dashboard.js"></script>
+<script src="calculator.js"></script>
+<script>
+// ---------- Init ----------
+renderCalc();
+if(lsGet("cryptobot_view","dash") === "calc") switchView("calc");
+document.getElementById("halalListInput").value = halalList.join(", ");
+renderPortfolio();
+refreshAll();
+setupAutoRefresh();
+</script>
+</body>
+</html>
