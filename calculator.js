@@ -31,17 +31,17 @@ function renderCalcPage(){
             <button data-m="direct" onclick="calcSet('mode','direct',true)">I know my average</button>
           </div>
           <div id="multiBox">
-            <p class="sub" style="margin:0 0 10px;font-size:13.5px">Add one line for each time you bought. Type the amount in <b>dollars</b> or in <b>coins</b> — you can write <b>1k</b> for 1,000 or <b>2.5m</b> for 2,500,000.</p>
+            <p class="sub" style="margin:0 0 10px;font-size:13.5px">Add one line for each time you bought. Type the amount in <b>dollars</b> or in <b>coins</b> — for big numbers type the number, then tap <b>K</b> (thousand) or <b>M</b> (million). Example: type <b>2.5</b>, tap <b>K</b> = 2,500.</p>
             <div id="buyRows"></div>
             <datalist id="exList"><option>Binance</option><option>Bybit</option><option>KuCoin</option><option>OKX</option><option>MEXC</option><option>Gate</option><option>Bitget</option><option>HTX</option><option>Coinbase</option></datalist>
             <button class="btn ghost" onclick="addRow()">＋ Add another buy</button>
           </div>
           <div id="directBox" class="hidden">
-            <p class="sub" style="margin:0 0 10px;font-size:13.5px">Copy the "Avg. price" your exchange shows you.</p>
+            <p class="sub" style="margin:0 0 10px;font-size:13.5px">Copy the "Avg. price" your exchange shows you. For big amounts: type the number, then tap <b>K</b> = thousand or <b>M</b> = million.</p>
             <div class="grid g2" style="gap:10px">
               <div class="field"><label class="f">Average buy price ($)</label><input class="input" id="dAvg" inputmode="decimal" oninput="calcSet('dAvg', this.value)"></div>
               <div class="field"><label class="f">How much you bought</label>
-                <div class="amt"><input class="input" id="dVal" inputmode="decimal" placeholder="e.g. 1k" oninput="calcSet('dVal', this.value)">
+                <div class="amt"><input class="input" id="dVal" inputmode="decimal" placeholder="e.g. 1" oninput="calcSet('dVal', this.value)"><button type="button" class="kBtn" onclick="addSuffix(this,'k')">K</button><button type="button" class="kBtn" onclick="addSuffix(this,'m')">M</button>
                 <select class="input" id="dKind" onchange="calcSet('dKind', this.value)"><option value="qty">Coins</option><option value="usd">$</option></select></div>
                 <div class="hint" id="dHint"></div></div>
             </div>
@@ -68,7 +68,7 @@ function renderCalcPage(){
           <p class="lead">See what happens if you buy more.</p>
           <div class="grid g2" style="gap:10px">
             <div class="field"><label class="f">If I buy more at ($)</label><input class="input" id="wPrice" inputmode="decimal" oninput="computeCalc()"></div>
-            <div class="field"><label class="f">Spending ($)</label><input class="input" id="wAmt" inputmode="decimal" placeholder="e.g. 500 or 1k" oninput="computeCalc()"></div>
+            <div class="field"><label class="f">Spending ($)</label><div class="amt"><input class="input" id="wAmt" inputmode="decimal" placeholder="e.g. 500" oninput="computeCalc()"><button type="button" class="kBtn" onclick="addSuffix(this,'k')">K</button><button type="button" class="kBtn" onclick="addSuffix(this,'m')">M</button></div></div>
           </div>
           <div class="note" id="whatIf"></div>
           <div class="grid g2" style="gap:10px;margin-top:14px">
@@ -140,7 +140,7 @@ function renderCalc(){
       <div class="bEx"><label class="f">Exchange (optional)</label><input class="input" list="exList" placeholder="e.g. Binance" value="${esc(r.ex)}" oninput="rowSet(${i},'ex',this.value)"></div>
       <div class="bP"><label class="f">Buy price ($)</label><input class="input" inputmode="decimal" placeholder="0.00" value="${esc(r.price)}" oninput="rowSet(${i},'price',this.value)"></div>
       <div class="bA"><label class="f">Amount</label><div class="amt">
-        <input class="input" inputmode="decimal" placeholder="${r.kind === 'usd' ? 'e.g. 500' : 'e.g. 1k'}" value="${esc(r.val)}" oninput="rowSet(${i},'val',this.value)">
+        <input class="input" inputmode="decimal" placeholder="${r.kind === 'usd' ? 'e.g. 500' : 'e.g. 1'}" value="${esc(r.val)}" oninput="rowSet(${i},'val',this.value)"><button type="button" class="kBtn" onclick="addSuffix(this,'k')">K</button><button type="button" class="kBtn" onclick="addSuffix(this,'m')">M</button>
         <select class="input" onchange="rowSet(${i},'kind',this.value); renderCalc()"><option value="usd" ${r.kind === 'usd' ? 'selected' : ''}>$</option><option value="qty" ${r.kind === 'qty' ? 'selected' : ''}>Coins</option></select>
       </div></div>
       <button class="del" title="Remove this buy" onclick="delRow(${i})">✕</button>
