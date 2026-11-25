@@ -182,6 +182,8 @@ details.more summary::-webkit-details-marker{display:none}
 .amt{display:flex;gap:6px}
 .amt .input{flex:1;min-width:0}
 .amt select.input{flex:0 0 78px;padding:9px 6px}
+.kBtn{flex:0 0 40px;background:var(--brandSoft);border:1px solid rgba(124,92,255,.45);color:#c4b5fd;border-radius:10px;font-weight:800;font-size:14px;cursor:pointer;font-family:inherit}
+.kBtn:active{background:var(--brand);color:#fff}
 .bigNum{font-size:34px;font-weight:800;letter-spacing:-.5px}
 .result{border-radius:16px;padding:16px;margin-top:12px;border:1px solid var(--line);background:var(--card)}
 .result.up{background:linear-gradient(160deg,rgba(34,197,94,.18),var(--card) 70%);border-color:rgba(34,197,94,.4)}

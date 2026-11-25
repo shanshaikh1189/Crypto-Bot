@@ -66,6 +66,15 @@ function amountHint(raw, unit){
   return /[kmb]/i.test(s) || /,/.test(s) ? `= ${plain(v)} ${unit || ""}` : "";
 }
 
+// K / M buttons next to amount boxes (iPhone number keypad has no letters)
+function addSuffix(btn, s){
+  const inp = btn.parentElement.querySelector("input"); if(!inp) return;
+  let v = inp.value.trim().replace(/[kmb]$/i, "");
+  if(!v) v = "1";
+  inp.value = v + s;
+  inp.dispatchEvent(new Event("input", { bubbles: true }));
+}
+
 // ---------- Coin helpers ----------
 const SKIP = new Set(["USDT","USDC","DAI","FDUSD","TUSD","USDE","USDD","PYUSD","USD1","USDG","USDS","BUSD","FRAX","USDP","GUSD","LUSD","USDB","RLUSD","EURC","USD0","SUSDE","SUSDS","USDX","USDF","USDTB","BFUSD","USYC","BUIDL","XAUT","PAXG",
   "WBTC","WETH","STETH","WSTETH","WEETH","CBBTC","RETH","WBETH","METH","EZETH","RSETH","LBTC","SOLVBTC","BTCB","WBNB","JITOSOL","MSOL","BNSOL","CBETH","TBTC","WSOL","WTRX"]);
