@@ -178,7 +178,7 @@ function openBuyModal(id, symbol, price, pre){
   openModal(`Practice buy · ${esc(symbol.toUpperCase())}`, `
     <div class="note" style="margin-bottom:14px">Practice money only. Price now: <b>${fmtPrice(price)}</b> · Cash available: <b>${fmtUsd(portfolio.cash)}</b></div>
     <div class="field"><label class="f">How much to spend ($)</label>
-      <input class="input" id="bAmt" inputmode="decimal" value="${amt}" oninput="buyPreview()"><div class="hint" id="bAmtHint"></div></div>
+      <div class="amt"><input class="input" id="bAmt" inputmode="decimal" value="${amt}" oninput="buyPreview()"><button type="button" class="kBtn" onclick="addSuffix(this,'k')">K</button><button type="button" class="kBtn" onclick="addSuffix(this,'m')">M</button></div><div class="hint" id="bAmtHint"></div></div>
     <div class="grid g2" style="gap:10px">
       <div class="field"><label class="f">Stop-loss price</label><input class="input" id="bSL" inputmode="decimal" value="${+(pre.sl || price*0.95).toPrecision(5)}" oninput="buyPreview()"></div>
       <div class="field"><label class="f">Target price</label><input class="input" id="bTP" inputmode="decimal" value="${+(pre.tp || price*1.08).toPrecision(5)}" oninput="buyPreview()"></div>
