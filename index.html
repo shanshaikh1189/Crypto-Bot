@@ -39,7 +39,7 @@
       <h1 id="pageH1">Home</h1>
       <div class="grow"></div>
       <button class="btn ghost sm" onclick="openSearch()">🔎 Search any coin</button>
-      <button class="btn ghost sm" onclick="refreshAll(true)">↻ Refresh</button>
+      <button class="btn ghost sm" onclick="refreshAll(true); if(typeof cloudUser !== 'undefined' && cloudUser) pullFromCloud(false)">↻ Refresh</button>
     </div>
 
     <!-- Mobile top bar -->
@@ -47,6 +47,7 @@
       <div class="logo"><div class="mark">🪙</div>Crypto Coach</div>
       <div class="grow"></div>
       <button class="iconBtn" onclick="openSearch()" aria-label="Search">🔎</button>
+      <button class="iconBtn" onclick="refreshAll(true); if(typeof cloudUser !== 'undefined' && cloudUser) pullFromCloud(false)" aria-label="Refresh prices">↻</button>
       <button class="iconBtn" onclick="go('settings')" aria-label="Account and settings" id="mAccountBtn">👤</button>
     </div>
     <div class="pageTitle" id="pageTitleM">Home</div>

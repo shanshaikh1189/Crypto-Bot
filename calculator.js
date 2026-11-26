@@ -316,12 +316,15 @@ function newCalc(){
   ["wPrice","wAmt","tAvg","tPrice"].forEach(id => { const e = document.getElementById(id); if(e) e.value = ""; });
   const li = document.getElementById("liveInfo"); if(li) li.textContent = "";
   renderCalc();
+  const ci = document.getElementById("cCoin"); if(ci) ci.focus();
 }
 function renderSaved(){
   const w = document.getElementById("savedWrap"); if(!w) return;
   const keys = Object.keys(savedCalcs());
   w.innerHTML = keys.length ? `<div class="muted" style="font-size:12px;font-weight:600;margin:6px 0">YOUR SAVED COINS</div>
-    <div class="chips">${keys.map(k => `<span class="chip ${k === calc.coin ? 'on' : ''}" onclick='loadCalc(${JSON.stringify(k)})'>${esc(k)} <span onclick='deleteCalc(${JSON.stringify(k)}, event)' style="margin-left:4px;opacity:.7">✕</span></span>`).join("")}</div>` : "";
+    <div class="chips">${keys.map(k => `<span class="chip ${k === calc.coin ? 'on' : ''}" onclick='loadCalc(${JSON.stringify(k)})'>${esc(k)} <span onclick='deleteCalc(${JSON.stringify(k)}, event)' style="margin-left:4px;opacity:.7">✕</span></span>`).join("")}
+      <button class="chip" style="border-style:dashed;color:var(--brand2)" onclick="newCalc()">＋ New coin</button></div>
+    <div class="hint">Tap a saved coin to open it. To add another coin, tap <b>＋ New coin</b> first, then type its name.</div>` : "";
 }
 function sendToCalc(sym, price){
   closeModal();
